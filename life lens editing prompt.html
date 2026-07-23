@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeLens — Intelligent AI Journaling & Memory Vault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --surface-card: rgba(19, 27, 46, 0.75);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --surface-hover: rgba(255, 255, 255, 0.04);
+            --accent-primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.12) 0%, transparent 45%);
+        }
+
+        /* --- SIDEBAR DESIGN --- */
+        aside {
+            width: var(--sidebar-width);
+            background: rgba(13, 19, 33, 0.85);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid var(--surface-border);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2.5rem;
+        }
+
+        .brand-icon {
+            font-size: 1.6rem;
+            -webkit-text-fill-color: initial;
+        }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.85rem 1.25rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            transition: all 0.25s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text-main);
+        }
+
+        .nav-btn.active {
+            background: var(--accent-gradient);
+            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+        }
+
+        .user-widget {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--surface-border);
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* --- MAIN VIEWPORT --- */
+        main {
+            flex: 1;
+            padding: 2.5rem 3rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* TOP METRICS BOARD */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            backdrop-filter: blur(12px);
+            padding: 1.25rem 1.5rem;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 600;
+        }
+
+        .stat-val {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin-top: 0.2rem;
+        }
+
+        /* --- DYNAMIC SECTIONS --- */
+        .section {
+            display: none;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        .section.active {
+            display: flex;
+        }
+
+        .card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* JOURNAL EDITOR */
+        textarea {
+            width: 100%;
+            height: 160px;
+            background: rgba(9, 13, 22, 0.6);
+            border: 1px solid var(--surface-border);
+            border-radius: 14px;
+            color: var(--text-main);
+            padding: 1.2rem;
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 1.25rem;
+            transition: border 0.2s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.6rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--surface-border);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background: var(--surface-hover);
+        }
+
+        /* SEARCH & TIMELINE */
+        .search-box {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-radius: 14px;
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .timeline-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .memory-card {
+            background: var(--surface-card);
+            border: 1px solid var(--surface-border);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .memory-card:hover {
+            transform: translateX(4px);
+        }
+
+        .memory-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .badge-pill {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            padding: 0.25rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* DASHBOARD ANALYTICS */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 1.75rem;
+        }
+
+        .chart-box {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            height: 180px;
+            padding-top: 2rem;
+        }
+
+        .chart-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .bar-fill {
+            width: 100%;
+            background: var(--accent-gradient);
+            border-radius: 6px 6px 0 0;
+            transition: height 0.4s ease;
+        }
+
+        .bar-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* ROUTINE PROGRESS BARS */
+        .routine-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .routine-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .meter-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            background: var(--accent-gradient);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR NAV -->
+    <aside>
+        <div>
+            <div class="brand">
+                <span class="brand-icon">✦</span> LifeLens
+            </div>
+            <ul class="nav-menu">
+                <li>
+                    <button class="nav-btn active" onclick="switchSection(this, 'write-sec')">
+                        <span>✍️</span> New Memory
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" onclick="switchSection(this, 'timeline-sec')">
+                        <span>📜</span> Memory Vault
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" onclick="switchSection(this, 'insights-sec')">
+                        <span>📊</span> Insights & Routine
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="user-widget">
+            <div class="avatar">JD</div>
+            <div>
+                <p style="font-weight: 600; font-size: 0.9rem;">Jane Doe</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Pro Subscriber</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN VIEWPORT -->
+    <main>
+
+        <!-- DASHBOARD METRICS HEADER -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div>
+                    <div class="stat-title">Saved Memories</div>
+                    <div class="stat-val" id="memory-counter">24</div>
+                </div>
+                <span style="font-size: 2rem;">📖</span>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <div class="stat-title">Journal Streak</div>
+                    <div class="stat-val">7 Days</div>
+                </div>
+                <span style="font-size: 2rem;">🔥</span>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <div class="stat-title">Weekly Tone</div>
+                    <div class="stat-val" id="primary-mood-label">Focused</div>
+                </div>
+                <span style="font-size: 2rem;">✨</span>
+            </div>
+        </div>
+
+        <!-- SECTION 1: JOURNAL EDITOR -->
+        <section id="write-sec" class="section active">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Capture Daily Thought</h3>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);" id="date-label">July 23, 2026</span>
+                </div>
+                
+                <textarea id="entry-input" placeholder="What stayed with you today? Write accomplishments, struggles, or routine observations..."></textarea>
+                
+                <div class="action-row">
+                    <div>
+                        <button class="btn btn-outline" onclick="toggleSpeech()">
+                            <span>🎙️</span> <span id="mic-status-label">Voice Record</span>
+                        </button>
+                    </div>
+                    <button class="btn" onclick="commitEntry()">
+                        <span>✨</span> Save Memory
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI REFLECTION DISPLAY -->
+            <div class="card" id="ai-reflection-box" style="display: none; border-color: rgba(99, 102, 241, 0.4);">
+                <div class="card-header">
+                    <h3>✦ LifeLens Reflection & Pattern Analysis</h3>
+                    <span class="badge-pill" id="ai-mood-badge">Positive</span>
+                </div>
+                <p id="ai-reflection-body" style="line-height: 1.6; color: var(--text-muted);"></p>
+            </div>
+        </section>
+
+        <!-- SECTION 2: TIMELINE & SEARCH -->
+        <section id="timeline-sec" class="section">
+            <input type="text" class="search-box" id="search-bar" placeholder="🔍 Search memories with natural queries (e.g. 'work stress', 'productive days')..." oninput="runSearch()">
+
+            <div class="timeline-feed" id="timeline-container">
+                <!-- Dynamically rendered timeline items -->
+            </div>
+        </section>
+
+        <!-- SECTION 3: INSIGHTS & PATTERNS -->
+        <section id="insights-sec" class="section">
+            <div class="grid-2">
+                
+                <!-- Chart Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Weekly Emotional Velocity</h3>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Energy and sentiment trends across the last 7 days.</p>
+                    
+                    <div class="chart-box">
+                        <div class="chart-column"><div class="bar-fill" style="height: 60%;"></div><span class="bar-label">Mon</span></div>
+                        <div class="chart-column"><div class="bar-fill" style="height: 85%;"></div><span class="bar-label">Tue</span></div>
+                        <div class="chart-column"><div class="bar-fill" style="height: 40%;"></div><span class="bar-label">Wed</span></div>
+                        <div class="chart-column"><div class="bar-fill" style="height: 95%;"></div><span class="bar-label">Thu</span></div>
+                        <div class="chart-column"><div class="bar-fill" style="height: 70%;"></div><span class="bar-label">Fri</span></div>
+                        <div class="chart-column"><div class="bar-fill" style="height: 50%;"></div><span class="bar-label">Sat</span></div>
+                        <div class="chart-column"><div class="bar-fill" style="height: 80%;"></div><span class="bar-label">Sun</span></div>
+                    </div>
+                </div>
+
+                <!-- Habits & Patterns Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Routine Insights</h3>
+                    </div>
+                    
+                    <div class="routine-list">
+                        <div>
+                            <div class="routine-info">
+                                <span>Late Night Writing</span>
+                                <span style="color: var(--accent-primary);">85% Frequency</span>
+                            </div>
+                            <div class="meter-track"><div class="meter-fill" style="width: 85%;"></div></div>
+                        </div>
+
+                        <div>
+                            <div class="routine-info">
+                                <span>Deep Work Mentions</span>
+                                <span style="color: var(--accent-green);">64% Consistency</span>
+                            </div>
+                            <div class="meter-track"><div class="meter-fill" style="width: 64%; background: var(--accent-green);"></div></div>
+                        </div>
+
+                        <div>
+                            <div class="routine-info">
+                                <span>Meeting Stress</span>
+                                <span style="color: var(--accent-amber);">28% Incidence</span>
+                            </div>
+                            <div class="meter-track"><div class="meter-fill" style="width: 28%; background: var(--accent-amber);"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Set Current Display Date
+        document.getElementById('date-label').innerText = new Date().toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        });
+
+        // Initial Data Archive
+        let journalEntries = [
+            {
+                id: 1,
+                date: "July 22, 2026",
+                text: "Finished the main UI design prototype for the project today! Felt super productive and focused.",
+                mood: "😊 Accomplished",
+                tag: "Work"
+            },
+            {
+                id: 2,
+                date: "July 20, 2026",
+                text: "Felt overwhelmed during the morning team sync. Took a 20-minute afternoon walk to clear my head.",
+                mood: "🌿 Restorative",
+                tag: "Wellness"
+            }
+        ];
+
+        // Tab Navigation
+        function switchSection(btnEl, secId) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+            btnEl.classList.add('active');
+            document.getElementById(secId).classList.add('active');
+
+            if(secId === 'timeline-sec') {
+                renderMemories(journalEntries);
+            }
+        }
+
+        // Web Speech API Integration
+        let speechRecognizer = null;
+        let recordingState = false;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            speechRecognizer = new SpeechRec();
+            speechRecognizer.continuous = true;
+            speechRecognizer.interimResults = true;
+
+            speechRecognizer.onresult = (event) => {
+                let currentTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    currentTranscript += event.results[i][0].transcript;
+                }
+                document.getElementById('entry-input').value = currentTranscript;
+            };
+        }
+
+        function toggleSpeech() {
+            if (!speechRecognizer) {
+                alert("Speech recognition isn't supported in your browser engine. Please type your entry.");
+                return;
+            }
+
+            const label = document.getElementById('mic-status-label');
+            if (!recordingState) {
+                speechRecognizer.start();
+                recordingState = true;
+                label.innerText = "Listening... (Click to Stop)";
+            } else {
+                speechRecognizer.stop();
+                recordingState = false;
+                label.innerText = "Voice Record";
+            }
+        }
+
+        // Sentiment Logic
+        function analyzeSentiment(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes('productive') || lower.includes('finished') || lower.includes('happy') || lower.includes('design')) {
+                return { mood: '😊 Accomplished', tag: 'Achievement', reflection: 'You are showing strong momentum on creative and milestone tasks. Keep up this clear flow!' };
+            } else if (lower.includes('tired') || lower.includes('stress') || lower.includes('anxious') || lower.includes('overwhelmed')) {
+                return { mood: '🌧️ Low Energy', tag: 'Reflective', reflection: 'It looks like you encountered some friction today. Remember to schedule proper break times when managing high workloads.' };
+            }
+            return { mood: '🧘 Calm', tag: 'Daily Note', reflection: 'A balanced entry. Regular daily logs help build meaningful long-term personal reflections.' };
+        }
+
+        // Commit Entry
+        function commitEntry() {
+            const field = document.getElementById('entry-input');
+            const val = field.value.trim();
+
+            if(!val) return alert("Please type or record a thought before saving.");
+
+            const analysis = analyzeSentiment(val);
+
+            const newEntry = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                text: val,
+                mood: analysis.mood,
+                tag: analysis.tag
+            };
+
+            journalEntries.unshift(newEntry);
+            field.value = "";
+
+            // Show AI Reflection Box
+            const box = document.getElementById('ai-reflection-box');
+            const body = document.getElementById('ai-reflection-body');
+            const badge = document.getElementById('ai-mood-badge');
+
+            box.style.display = 'block';
+            body.innerText = analysis.reflection;
+            badge.innerText = analysis.mood;
+
+            // Update Metrics Counter
+            document.getElementById('memory-counter').innerText = journalEntries.length + 22;
+        }
+
+        // Render Memory Feed
+        function renderMemories(list) {
+            const feed = document.getElementById('timeline-container');
+            feed.innerHTML = "";
+
+            if(list.length === 0) {
+                feed.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 2rem;">No matching entries found in your archive.</p>`;
+                return;
+            }
+
+            list.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.innerHTML = `
+                    <div class="memory-header">
+                        <span>${item.date}</span>
+                        <span class="badge-pill">${item.tag}</span>
+                    </div>
+                    <p style="line-height: 1.5; font-size: 0.95rem;">${item.text}</p>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">${item.mood}</div>
+                `;
+                feed.appendChild(card);
+            });
+        }
+
+        // Natural Language Search Filter
+        function runSearch() {
+            const query = document.getElementById('search-bar').value.toLowerCase();
+            const filtered = journalEntries.filter(m => 
+                m.text.toLowerCase().includes(query) || 
+                m.tag.toLowerCase().includes(query) ||
+                m.mood.toLowerCase().includes(query)
+            );
+            renderMemories(filtered);
+        }
+    </script>
+</body>
+</html>
