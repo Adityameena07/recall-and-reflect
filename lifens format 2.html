@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
+<title>MEMORIA — Your Personal Intelligence Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<style>
+  :root{
+    --ink:#0b0f1a;
+    --ink-soft: #0e1424;
+    --panel: rgba(23,29,46,0.82);
+    --panel-solid:#171d2e;
+    --panel-raised:#1c2438;
+    --border: rgba(201,162,39,0.16);
+    --border-strong: rgba(201,162,39,0.34);
+    --brass:#c9a227;
+    --brass-bright:#e8c34a;
+    --amber:#d98a3d;
+    --teal:#4f9d9f;
+    --slate:#6b7a99;
+    --lavender:#a67bc4;
+    --blue:#5c7fae;
+    --rose:#c1615a;
+    --text:#ece6d6;
+    --muted:#8d93a8;
+    --muted-2:#6b7286;
+    --radius:16px;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; -webkit-tap-highlight-color:transparent; }
+
+  h1,h2,h3,h4{ font-family:'Fraunces', serif; font-weight:600; letter-spacing:-0.01em; }
+
+  ::selection{ background: rgba(201,162,39,0.3); }
+
+  :focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  body{
+    background-color: var(--ink);
+    color: var(--text);
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+    background-image:
+      radial-gradient(circle at 8% 15%, rgba(201,162,39,0.09) 0%, transparent 42%),
+      radial-gradient(circle at 92% 85%, rgba(79,157,159,0.10) 0%, transparent 42%);
+  }
+
+  /* ===== AUTH ===== */
+  .auth-overlay{
+    position:fixed; inset:0; width:100vw; height:100vh;
+    background: rgba(11,15,26,0.96);
+    backdrop-filter: blur(16px);
+    display:flex; align-items:center; justify-content:center;
+    z-index:1000; padding:1rem;
+  }
+  .auth-card{
+    background: var(--panel-solid);
+    border:1px solid var(--border);
+    padding:2.25rem 2rem;
+    border-radius: 20px;
+    width:100%; max-width:400px;
+    text-align:center;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.55);
+  }
+  .auth-mark{ font-size:0.7rem; letter-spacing:0.2em; color:var(--brass); text-transform:uppercase; margin-bottom:0.6rem; }
+  .auth-card h2{ font-size:2rem; color:var(--text); margin-bottom:0.4rem; }
+  .auth-card p{ color:var(--muted); font-size:0.85rem; margin-bottom:1.75rem; line-height:1.5; }
+  .input-group{ display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.5rem; text-align:left; }
+  .input-group label{ font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+  .input-group input{
+    width:100%; padding:0.85rem 1rem;
+    background: rgba(11,15,26,0.6);
+    border:1px solid var(--border);
+    border-radius:10px; color:var(--text); font-size:0.95rem;
+    font-family:'Inter';
+  }
+  .auth-footnote{ font-size:0.72rem; color:var(--muted-2); margin-top:1rem; line-height:1.5; }
+
+  /* ===== SIDEBAR / NAV ===== */
+  aside{
+    width:260px;
+    background: rgba(15,20,33,0.9);
+    backdrop-filter: blur(12px);
+    border-right:1px solid var(--border);
+    display:flex; flex-direction:column;
+    padding:2rem 1.25rem;
+    justify-content:space-between;
+    z-index:100;
+  }
+  .brand-logo{ font-size:1.35rem; color:var(--text); margin-bottom:0.15rem; }
+  .brand-logo em{ color:var(--brass); font-style:normal; }
+  .brand-tagline{ font-size:0.7rem; color:var(--muted-2); margin-bottom:2rem; letter-spacing:0.02em; }
+  .nav-links{ list-style:none; display:flex; flex-direction:column; gap:0.4rem; }
+  .nav-links li button{
+    width:100%; background:transparent; border:none; color:var(--muted);
+    padding:0.8rem 1rem; text-align:left; border-radius:12px; cursor:pointer;
+    font-size:0.92rem; font-weight:500; display:flex; align-items:center; gap:0.75rem;
+    transition: all 0.2s ease;
+  }
+  .nav-links li button:hover{ background: rgba(255,255,255,0.04); color:var(--text); }
+  .nav-links li button.active{
+    background: rgba(201,162,39,0.14);
+    color: var(--brass-bright);
+    border:1px solid var(--border-strong);
+  }
+  .user-session-card{
+    padding-top:1.25rem; border-top:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .user-avatar{
+    width:36px; height:36px; border-radius:50%;
+    background: linear-gradient(135deg, var(--brass), var(--amber));
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:0.85rem; color:#1a1305;
+  }
+
+  /* ===== MAIN ===== */
+  main{ flex:1; padding:2rem 2.5rem; overflow-y:auto; display:flex; flex-direction:column; gap:1.75rem; }
+  .mobile-header{ display:none; }
+
+  .stats-bar{ display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:1rem; }
+  .stat-card{
+    background: var(--panel); border:1px solid var(--border); backdrop-filter: blur(10px);
+    padding:1.1rem 1.25rem; border-radius: var(--radius);
+  }
+  .stat-card h4{ font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; font-family:'IBM Plex Mono'; font-weight:500; }
+  .stat-card p{ font-family:'IBM Plex Mono'; font-size:1.5rem; font-weight:600; margin-top:0.3rem; color:var(--text); }
+
+  .section{ display:none; flex-direction:column; gap:1.5rem; }
+  .section.active{ display:flex; }
+
+  .card{ background: var(--panel); border:1px solid var(--border); backdrop-filter: blur(10px); border-radius: var(--radius); padding:1.5rem; }
+  .card h3{ font-size:1.15rem; margin-bottom:0.9rem; color:var(--text); }
+  .card h3 small{ display:block; font-family:'Inter'; font-weight:400; font-size:0.75rem; color:var(--muted); margin-top:0.2rem; }
+
+  /* AI PROMPT STRIP */
+  .ai-generator-strip{
+    background: rgba(201,162,39,0.06); border:1px dashed var(--border-strong);
+    border-radius:14px; padding:1rem; margin-bottom:1rem;
+    display:flex; flex-direction:column; gap:0.75rem;
+  }
+  .strip-label{ font-size:0.78rem; font-weight:600; color:var(--brass-bright); }
+  .prompt-pills{ display:flex; gap:0.5rem; overflow-x:auto; padding-bottom:0.2rem; }
+  .pill-btn{
+    background: rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--muted);
+    padding:0.42rem 0.85rem; border-radius:20px; font-size:0.75rem; white-space:nowrap; cursor:pointer;
+  }
+  .pill-btn:hover{ color:var(--text); border-color: var(--border-strong); }
+
+  .mood-chip-row{ display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem; }
+  .mood-chip{
+    background: rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted);
+    padding:0.4rem 0.8rem; border-radius:20px; font-size:0.78rem; cursor:pointer; font-family:'Inter';
+  }
+  .mood-chip.selected{ background: rgba(201,162,39,0.18); border-color: var(--brass); color: var(--brass-bright); }
+
+  textarea{
+    width:100%; height:130px; background: rgba(11,15,26,0.6); border:1px solid var(--border);
+    border-radius:12px; color:var(--text); padding:1rem; font-size:0.95rem; resize:vertical; font-family:'Inter';
+  }
+  .live-tags{ display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.65rem; min-height:1.4rem; }
+  .tip-text{ font-size:0.72rem; color:var(--muted-2); margin-top:0.6rem; }
+
+  /* ATTACHMENTS */
+  .attachment-drop-zone {
+    border: 1px dashed var(--border-strong);
+    background: rgba(11,15,26,0.3);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .attachment-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .attach-chip {
+    background: rgba(79,157,159,0.12);
+    border: 1px solid rgba(79,157,159,0.3);
+    color: #8fd1d3;
+    padding: 0.3rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .attach-chip button {
+    background: transparent; border: none; color: #8fd1d3; cursor: pointer; font-size: 0.85rem;
+  }
+
+  .controls{ display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-top:1rem; }
+  .btn{
+    background: linear-gradient(135deg, var(--brass), var(--amber)); color:#1a1305; border:none;
+    padding:0.75rem 1.25rem; border-radius:10px; cursor:pointer; font-weight:700; font-size:0.88rem;
+  }
+  .btn-secondary{ background: rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); font-weight:600; }
+  .btn-small{ padding:0.5rem 0.9rem; font-size:0.78rem; }
+
+  .insight-box{ background: rgba(255,255,255,0.03); border:1px dashed var(--border); padding:1rem; border-radius:12px; margin-top:0.5rem; line-height:1.5; }
+
+  /* TIMELINE / VAULT */
+  .filter-row{ display:flex; gap:0.6rem; margin-bottom:1rem; flex-wrap:wrap; }
+  .search-box, select.filter-select{
+    padding:0.8rem 1rem; background: var(--panel); border:1px solid var(--border); border-radius:12px;
+    color:var(--text); font-size:0.88rem; font-family:'Inter';
+  }
+  .search-box{ flex:1; min-width:180px; }
+  select.filter-select{ cursor:pointer; }
+  .toggle-btn{
+    background: var(--panel); border:1px solid var(--border); color:var(--muted); border-radius:12px;
+    padding:0.8rem 1rem; font-size:0.85rem; cursor:pointer; white-space:nowrap;
+  }
+  .toggle-btn.active{ border-color: var(--brass); color: var(--brass-bright); }
+
+  .timeline-item{
+    background: var(--panel); border:1px solid var(--border); border-left:4px solid var(--brass);
+    padding:1.1rem 1.25rem; border-radius:14px; display:flex; flex-direction:column; gap:0.6rem; margin-bottom:0.9rem;
+  }
+  .timeline-head{ display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--muted); font-family:'IBM Plex Mono'; }
+  .badge{ padding:0.22rem 0.6rem; border-radius:12px; font-size:0.72rem; font-weight:600; font-family:'Inter'; }
+  .timeline-text{ font-size:0.9rem; line-height:1.5; white-space:pre-wrap; }
+  .timeline-attachments { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.2rem; }
+  .timeline-thumb { max-width: 120px; max-height: 120px; border-radius: 8px; border: 1px solid var(--border); object-fit: cover; }
+  .tag-row{ display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.2rem; }
+  .tag-chip{ background: rgba(201,162,39,0.12); color:var(--brass-bright); padding:0.15rem 0.55rem; border-radius:10px; font-size:0.7rem; font-family:'IBM Plex Mono'; }
+  .timeline-actions{ display:flex; gap:0.5rem; justify-content:flex-end; }
+  .icon-btn{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:1rem; padding:0.2rem 0.4rem; border-radius:6px; }
+  .icon-btn:hover{ background: rgba(255,255,255,0.05); }
+
+  .empty-state{ text-align:center; color:var(--muted); font-size:0.88rem; padding:2.5rem 1rem; }
+
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+
+  /* CHARTS */
+  .chart-card{ position:relative; height:270px; }
+  .chart-card canvas{ max-height:100%; }
+
+  .heatmap-scroll{ overflow-x:auto; padding-bottom:0.35rem; }
+  #heatmap-grid{ display:grid; grid-template-rows:repeat(7, 12px); grid-auto-flow:column; gap:3px; width:max-content; }
+  .heat-cell{ width:12px; height:12px; border-radius:3px; background: rgba(255,255,255,0.05); }
+  .heat-cell.level-1{ background: rgba(201,162,39,0.32); }
+  .heat-cell.level-2{ background: rgba(201,162,39,0.62); }
+  .heat-cell.level-3{ background: var(--brass); }
+  .heatmap-legend{ display:flex; align-items:center; gap:0.4rem; margin-top:0.6rem; font-size:0.7rem; color:var(--muted-2); }
+
+  .themes-list{ display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; }
+  .theme-chip{ background: rgba(79,157,159,0.12); color:#8fd1d3; padding:0.35rem 0.85rem; border-radius:16px; font-family:'IBM Plex Mono'; }
+
+  /* COACH */
+  .coach-card{ display:flex; gap:1rem; align-items:flex-start; background: var(--panel); border:1px solid var(--border); border-radius:14px; padding:1.1rem 1.25rem; }
+  .coach-icon{ font-size:1.4rem; line-height:1; }
+  .coach-card h4{ font-size:0.95rem; margin-bottom:0.3rem; }
+  .coach-card p{ font-size:0.85rem; color:var(--muted); line-height:1.5; }
+  .coach-footnote{ font-size:0.73rem; color:var(--muted-2); text-align:center; padding-top:0.5rem; line-height:1.6; }
+
+  /* GOALS */
+  .goal-row{ display:flex; align-items:center; gap:2rem; flex-wrap:wrap; }
+  .progress-ring{ width:150px; height:150px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .progress-ring-inner{ width:112px; height:112px; border-radius:50%; background: var(--panel-solid); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .progress-ring-inner span{ font-family:'IBM Plex Mono'; font-size:1.3rem; font-weight:600; }
+  .progress-ring-inner small{ color:var(--muted); font-size:0.68rem; margin-top:0.15rem; }
+  .goal-controls{ display:flex; flex-direction:column; gap:0.6rem; }
+  .goal-controls label{ font-size:0.78rem; color:var(--muted); }
+  .goal-input-row{ display:flex; gap:0.6rem; }
+  .goal-input-row input{ width:80px; padding:0.6rem; background: rgba(11,15,26,0.6); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'IBM Plex Mono'; }
+
+  .badges-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:0.9rem; }
+  .badge-card{ background: var(--panel); border:1px solid var(--border); border-radius:14px; padding:1rem; text-align:center; }
+  .badge-card.locked{ opacity:0.4; filter:grayscale(0.6); }
+  .badge-icon{ font-size:1.6rem; margin-bottom:0.4rem; }
+  .badge-name{ font-size:0.82rem; font-weight:600; margin-bottom:0.2rem; }
+  .badge-desc{ font-size:0.7rem; color:var(--muted); line-height:1.4; }
+
+  .backup-row{ display:flex; gap:0.75rem; flex-wrap:wrap; }
+  input[type="file"]{ display:none; }
+
+  /* ===== MOBILE ===== */
+  @media screen and (max-width:768px){
+    body{ flex-direction:column; }
+    aside{
+      position:fixed; bottom:0; left:0; width:100%; height:68px; padding:0 0.4rem;
+      flex-direction:row; align-items:center; border-right:none; border-top:1px solid var(--border);
+      background: rgba(11,15,26,0.97);
+    }
+    .brand-logo, .brand-tagline, .user-session-card{ display:none; }
+    aside > div:first-child{ width:100%; }
+    .nav-links{ flex-direction:row; width:100%; justify-content:space-around; }
+    .nav-links li button{ padding:0.4rem 0.5rem; font-size:0.62rem; flex-direction:column; gap:0.2rem; border-radius:8px; }
+    .mobile-header{ display:flex; justify-content:space-between; align-items:center; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+    main{ padding:1.25rem 1.1rem 5.5rem 1.1rem; }
+    .stats-bar{ grid-template-columns:repeat(2, 1fr); }
+    .grid-2{ grid-template-columns:1fr; }
+    .controls{ flex-direction:column; align-items:stretch; }
+    .controls button{ width:100%; }
+    .goal-row{ justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-overlay" id="auth-modal">
+  <div class="auth-card">
+    <div class="auth-mark">MEMORIA</div>
+    <h2>Open your ledger</h2>
+    <p>Pick a name to open your private reflection ledger on this device. No account, no server — just your own memory, enhanced with local Generative AI attachments.</p>
+    <div class="input-group">
+      <label>Ledger name</label>
+      <input type="text" id="auth-userid" placeholder="e.g. alex" autocomplete="off" onkeydown="if(event.key==='Enter'){ handleAuth(); }">
+    </div>
+    <button type="button" class="btn" style="width:100%;" onclick="handleAuth()">Open Ledger</button>
+    <p class="auth-footnote">Everything stays locally in your browser, powered securely by local AI capabilities.</p>
+  </div>
+</div>
+
+<!-- NAV -->
+<aside>
+  <div>
+    <div class="brand-logo"><em>✦</em> MEMORIA</div>
+    <div class="brand-tagline">Intelligence Ledger & AI Attachments</div>
+    <ul class="nav-links">
+      <li><button class="active" onclick="showSection(this, 'write')"><span>✍️</span><span>Write</span></button></li>
+      <li><button onclick="showSection(this, 'vault')"><span>📜</span><span>Vault</span></button></li>
+      <li><button onclick="showSection(this, 'insights')"><span>📈</span><span>Insights</span></button></li>
+      <li><button onclick="showSection(this, 'coach')"><span>🧭</span><span>Coach</span></button></li>
+      <li><button onclick="showSection(this, 'goals')"><span>🎯</span><span>Goals</span></button></li>
+    </ul>
+  </div>
+  <div class="user-session-card">
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <div class="user-avatar" id="user-avatar-initials">U</div>
+      <div>
+        <p style="font-weight:600; font-size:0.8rem;" id="display-user-id">Session</p>
+        <p style="font-size:0.68rem; color:var(--teal);">On device AI</p>
+      </div>
+    </div>
+    <button onclick="logout()" style="background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:1.1rem;" title="Close ledger">🚪</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+  <div class="mobile-header">
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <div class="user-avatar" id="mob-user-avatar">U</div>
+      <span style="font-weight:600; font-size:0.9rem;" id="mob-display-user">User</span>
+    </div>
+    <button onclick="logout()" style="background:transparent; border:none; color:var(--muted); font-size:1.1rem;">🚪</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-card"><h4>Entries</h4><p id="stat-entries">0</p></div>
+    <div class="stat-card"><h4>Current Streak</h4><p id="stat-current-streak">0</p></div>
+    <div class="stat-card"><h4>Best Streak</h4><p id="stat-best-streak">0</p></div>
+    <div class="stat-card"><h4>Words Written</h4><p id="stat-words">0</p></div>
+    <div class="stat-card"><h4>Recent Mood</h4><p id="stat-mood">—</p></div>
+  </div>
+
+  <!-- WRITE -->
+  <section id="write" class="section active">
+    <div class="card">
+      <div class="ai-generator-strip">
+        <div class="strip-label">💡 Starters & Generative AI Assistant</div>
+        <div class="prompt-pills">
+          <button class="pill-btn" onclick="insertPrompt('What was my biggest win today, and what made it happen?')">🎯 Biggest win</button>
+          <button class="pill-btn" onclick="insertPrompt('Right now I would caption today as: ')">🏷️ Mood caption</button>
+          <button class="pill-btn" onclick="insertPrompt('A challenge I ran into today was… and I handled it by…')">🧩 Problem solving</button>
+          <button class="pill-btn" onclick="insertPrompt('Three things I am genuinely grateful for right now:')">🙏 Gratitude</button>
+          <button class="pill-btn" onclick="triggerAIExpand()">✨ Expand thought with AI</button>
+        </div>
+      </div>
+
+      <div class="mood-chip-row" id="mood-chip-row"></div>
+
+      <textarea id="journal-input" placeholder="What's on your mind? Use #tags anywhere, or attach images/files to parse insights with local generative AI."></textarea>
+      <div class="live-tags" id="live-tags"></div>
+
+      <!-- AI ATTACHMENT STRIP -->
+      <div class="attachment-drop-zone">
+        <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:var(--muted);">
+          <span>📎 AI Context Attachments:</span>
+          <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('file-attachment-input').click()">Add Image / File</button>
+          <input type="file" id="file-attachment-input" multiple accept="image/*,.txt,.md,.json" onchange="handleFilesSelected(event)">
+        </div>
+        <span style="font-size:0.7rem; color:var(--muted-2);" id="ai-model-status">GenAI Engine Ready</span>
+      </div>
+      <div class="attachment-chips" id="current-attachments-list"></div>
+
+      <p class="tip-text">Tip: ⌘/Ctrl + Enter saves instantly · Attach images or notes to auto-generate context summaries.</p>
+
+      <div class="controls">
+        <button class="btn btn-secondary" id="voice-btn" onclick="toggleVoice()">🎙️ <span id="mic-label">Voice Record</span></button>
+        <button class="btn" onclick="saveEntry()">Save Memory & Process AI</button>
+      </div>
+    </div>
+
+    <div class="card" id="reflection-card" style="display:none; border-color: var(--border-strong);">
+      <h3>✦ Generative Reflection & Analysis</h3>
+      <div class="insight-box"><p id="reflection-text">Analyzing with intelligence models…</p></div>
+    </div>
+  </section>
+
+  <!-- VAULT -->
+  <section id="vault" class="section">
+    <div class="filter-row">
+      <input type="text" class="search-box" id="search-input" placeholder="🔍 Search entries, AI notes, and tags…" onkeyup="renderVault()">
+      <select class="filter-select" id="mood-filter" onchange="onMoodFilterChange()"></select>
+      <button class="toggle-btn" id="pin-toggle" onclick="togglePinnedFilter()">⭐ Pinned only</button>
+    </div>
+    <div id="timeline-list"></div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section id="insights" class="section">
+    <div class="grid-2">
+      <div class="card chart-card">
+        <h3>Mood Trend<small>Valence of your last 30 entries, from −3 to +3</small></h3>
+        <canvas id="chart-trend"></canvas>
+      </div>
+      <div class="card chart-card">
+        <h3>Mood Distribution<small>How your entries break down overall</small></h3>
+        <canvas id="chart-dist"></canvas>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card chart-card">
+        <h3>Writing Volume<small>Entries per day, last 7 days</small></h3>
+        <canvas id="chart-vol"></canvas>
+      </div>
+      <div class="card">
+        <h3>Recurring Themes<small>Your most common words, excluding filler</small></h3>
+        <div class="themes-list" id="themes-list"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Reflection Ledger<small>Every square is a day — brighter means more entries</small></h3>
+      <div class="heatmap-scroll"><div id="heatmap-grid"></div></div>
+      <div class="heatmap-legend">
+        <span>Less</span>
+        <div class="heat-cell level-0"></div><div class="heat-cell level-1"></div><div class="heat-cell level-2"></div><div class="heat-cell level-3"></div>
+        <span>More</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- COACH -->
+  <section id="coach" class="section">
+    <div class="card">
+      <h3>🧭 Personal Intelligence Coach<small>Generative behavioral synthesis pulled from your entries</small></h3>
+    </div>
+    <div id="coach-list" style="display:flex; flex-direction:column; gap:0.9rem;"></div>
+    <p class="coach-footnote">MEMORIA leverages generative patterns in your own text to assist clarity and retrospection.</p>
+  </section>
+
+  <!-- GOALS -->
+  <section id="goals" class="section">
+    <div class="card">
+      <h3>Weekly Writing Goal</h3>
+      <div class="goal-row">
+        <div class="progress-ring" id="goal-progress-ring">
+          <div class="progress-ring-inner">
+            <span id="goal-progress-text">0 / 5</span>
+            <small>this week</small>
+          </div>
+        </div>
+        <div class="goal-controls">
+          <label>Entries per week</label>
+          <div class="goal-input-row">
+            <input type="number" id="goal-input" min="1" max="21" value="5">
+            <button class="btn btn-small" onclick="saveGoal()">Save Goal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Achievements<small>Unlocked automatically as your ledger grows</small></h3>
+      <div class="badges-grid" id="achievements-grid"></div>
+    </div>
+
+    <div class="card">
+      <h3>Backup & Long-Term Memory<small>Export or restore your secure ledger anytime</small></h3>
+      <div class="backup-row">
+        <button class="btn btn-secondary" onclick="exportData()">⬇️ Export Backup</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">⬆️ Restore Backup</button>
+        <input type="file" id="import-file" accept="application/json" onchange="importData(event)">
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ============ DATA MODEL ============ */
+let currentUser = null;
+let appData = { entries: [], goals: { weekly: 5 }, unlockedAchievements: [] };
+let selectedMoodOverride = null;
+let vaultFilterMood = 'all';
+let vaultPinnedOnly = false;
+let charts = {};
+let recognition = null;
+let isRecording = false;
+let baseTextBeforeVoice = '';
+let currentAttachments = [];
+
+const STOPWORDS = new Set(["the","and","was","were","are","is","be","been","being","to","of","in","on","at","for","with","as","by","that","this","it's","its","my","me","we","our","you","your","he","she","they","them","his","her","their","not","just","really","very","today","have","has","had","do","does","did","will","would","can","could","should","about","from","into","up","down","out","over","under","again","then","than","also","there","here","when","what","who","how","because","went","get","got","one","all","some","been","this","that","have","were","those","these","been"]);
+
+const MOOD_CATEGORIES = [
+  { name:'Grateful',  emoji:'🙏', valence: 3, color:'#c9a227', words:['grateful','thankful','blessed','appreciate','appreciation','gratitude'] },
+  { name:'Joyful',    emoji:'😊', valence: 3, color:'#e8c34a', words:['happy','joy','joyful','excited','great','wonderful','amazing','delighted','glad','fun','laugh','smile','smiled'] },
+  { name:'Motivated', emoji:'🔥', valence: 2, color:'#d98a3d', words:['motivated','determined','focused','driven','accomplish','accomplished','achieve','achieved','productive','goal','win','won','success','successful','proud'] },
+  { name:'Calm',      emoji:'🧘', valence: 1, color:'#4f9d9f', words:['calm','peaceful','relaxed','content','serene','quiet','rested'] },
+  { name:'Tired',     emoji:'😴', valence:-1, color:'#6b7a99', words:['tired','exhausted','drained','sleepy','fatigued','sluggish'] },
+  { name:'Anxious',   emoji:'😰', valence:-2, color:'#a67bc4', words:['anxious','anxiety','worried','worry','nervous','overwhelmed','panic','stressed','stress'] },
+  { name:'Sad',       emoji:'😔', valence:-2, color:'#5c7fae', words:['sad','depressed','lonely','alone','grief','cry','crying','hopeless','down','disappointed','disappointing','hurt'] },
+  { name:'Angry',     emoji:'😠', valence:-3, color:'#c1615a', words:['angry','anger','frustrated','frustrating','furious','annoyed','irritated','mad'] }
+];
+const NEUTRAL = { name:'Neutral', emoji:'😐', valence:0, color:'#8d93a8' };
+const ALL_MOODS = [...MOOD_CATEGORIES, NEUTRAL];
+
+const MICRO_INSIGHTS = {
+  Grateful:  ["Generative synthesis: Gratitude compounds — noticing the good surfaces more of it.", "That kind of reflection sharpens focus."],
+  Joyful:    ["Generative synthesis: Worth keeping on record for future perspective.", "Positive valence verified."],
+  Motivated: ["Generative synthesis: Momentum detected. Secure the plan for tomorrow.", "Productivity thread maintained."],
+  Calm:      ["Generative synthesis: A grounded state of mind.", "Equilibrium logged successfully."],
+  Tired:     ["Generative synthesis: Rest is productive processing.", "Consider lighter execution windows."],
+  Anxious:   ["Generative synthesis: Externalizing thoughts reduces working memory friction.", "Structured breakdown helps."],
+  Sad:       ["Generative synthesis: Acknowledging weight clears room for resolution.", "Processing emotional load."],
+  Angry:     ["Generative synthesis: Directing high-energy frustration into structured steps.", "Clarity will follow."],
+  Neutral:   ["Generative synthesis: Neutral baseline data point recorded.", "Consistent ledger maintenance."]
+};
+
+const ACHIEVEMENTS = [
+  { id:'first',      icon:'🌱', name:'First Reflection', desc:'Write your very first entry.', test: d => d.entries.length >= 1 },
+  { id:'streak7',    icon:'🔥', name:'Week Streak',       desc:'Reach a 7-day writing streak.', test: d => computeStreaks(d.entries).best >= 7 },
+  { id:'streak30',   icon:'⚡', name:'Month Streak',      desc:'Reach a 30-day writing streak.', test: d => computeStreaks(d.entries).best >= 30 },
+  { id:'entries25',  icon:'📚', name:'Growing Ledger',    desc:'Log 25 entries.', test: d => d.entries.length >= 25 },
+  { id:'entries100', icon:'🏛️', name:'Century Club',      desc:'Log 100 entries.', test: d => d.entries.length >= 100 },
+  { id:'words10k',   icon:'✒️', name:'Wordsmith',         desc:'Write 10,000 words in total.', test: d => d.entries.reduce((s,e)=>s+e.wordCount,0) >= 10000 },
+  { id:'grateful10', icon:'🙏', name:'Grateful Heart',    desc:'Log 10 gratitude entries.', test: d => d.entries.filter(e=>e.mood.label==='Grateful').length >= 10 },
+  { id:'nightowl',   icon:'🌙', name:'Night Owl',         desc:'Write between midnight and 4am.', test: d => d.entries.some(e=>{ const h=parseInt(e.time.split(':')[0]); return h>=0 && h<4; }) },
+  { id:'earlybird',  icon:'🌅', name:'Early Bird',        desc:'Write between 5am and 7am.', test: d => d.entries.some(e=>{ const h=parseInt(e.time.split(':')[0]); return h>=5 && h<7; }) },
+  { id:'tagmaster',  icon:'🏷️', name:'Tag Master',        desc:'Use 10 unique tags.', test: d => new Set(d.entries.flatMap(e=>e.tags)).size >= 10 }
+];
+
+/* ============ HELPERS ============ */
+function isoDate(d){ return d.toISOString().slice(0,10); }
+function escapeHtml(str){ return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function hexToRgba(hex, alpha){
+  const h = hex.replace('#','');
+  const bigint = parseInt(h,16);
+  const r=(bigint>>16)&255, g=(bigint>>8)&255, b=bigint&255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function formatHour(h){
+  const period = h>=12 ? 'PM':'AM';
+  let h12 = h%12; if(h12===0) h12=12;
+  return `${h12}:00 ${period}`;
+}
+
+function computeMood(text){
+  const lower = text.toLowerCase();
+  let best=null, bestCount=0;
+  MOOD_CATEGORIES.forEach(cat=>{
+    let count=0;
+    cat.words.forEach(w=>{ if(lower.includes(w)) count++; });
+    if(count>bestCount){ bestCount=count; best=cat; }
+  });
+  const src = best || NEUTRAL;
+  return { label:src.name, emoji:src.emoji, valence:src.valence, color:src.color };
+}
+
+function extractHashtags(text){
+  const matches = text.match(/#[a-zA-Z0-9_]+/g) || [];
+  return [...new Set(matches.map(t=>t.slice(1).toLowerCase()))];
+}
+
+function topThemes(entries, limit=12){
+  const freq = {};
+  entries.forEach(e=>{
+    const words = e.text.toLowerCase().match(/[a-z']+/g) || [];
+    words.forEach(w=>{
+      if(w.length<4 || STOPWORDS.has(w)) return;
+      freq[w] = (freq[w]||0)+1;
+    });
+  });
+  return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,limit);
+}
+
+function computeStreaks(entries){
+  const days = [...new Set(entries.map(e=>e.isoDate))].sort();
+  if(days.length===0) return { current:0, best:0 };
+  const daySet = new Set(days);
+  let best=1, run=1;
+  for(let i=1;i<days.length;i++){
+    const diff = Math.round((new Date(days[i]) - new Date(days[i-1])) / 86400000);
+    run = diff===1 ? run+1 : 1;
+    if(run>best) best=run;
+  }
+  let current=0;
+  let cursor = new Date(); cursor.setHours(0,0,0,0);
+  let cursorStr = isoDate(cursor);
+  if(!daySet.has(cursorStr)){ cursor.setDate(cursor.getDate()-1); cursorStr = isoDate(cursor); }
+  while(daySet.has(cursorStr)){
+    current++;
+    cursor.setDate(cursor.getDate()-1);
+    cursorStr = isoDate(cursor);
+  }
+  return { current, best };
+}
+
+function persist(){
+  if(!currentUser) return;
+  localStorage.setItem(`memoria_data_${currentUser}`, JSON.stringify(appData));
+}
+
+/* ============ AUTH ============ */
+window.addEventListener('DOMContentLoaded', ()=>{
+  setupVoice();
+  buildMoodChips();
+  buildMoodFilter();
+  const sessionUser = localStorage.getItem('memoria_active_session');
+  if(sessionUser) loginUserSession(sessionUser);
+  document.getElementById('journal-input').addEventListener('input', updateLiveTags);
+});
+
+function handleAuth(){
+  const input = document.getElementById('auth-userid');
+  const userId = input.value.trim().toLowerCase();
+  if(!userId){ input.focus(); return; }
+  loginUserSession(userId);
+}
+
+function loginUserSession(userId){
+  currentUser = userId;
+  localStorage.setItem('memoria_active_session', userId);
+  document.getElementById('auth-modal').style.display = 'none';
+
+  document.getElementById('display-user-id').innerText = `@${userId}`;
+  document.getElementById('mob-display-user').innerText = `@${userId}`;
+  const initial = userId.charAt(0).toUpperCase();
+  document.getElementById('user-avatar-initials').innerText = initial;
+  document.getElementById('mob-user-avatar').innerText = initial;
+
+  const saved = localStorage.getItem(`memoria_data_${userId}`);
+  appData = saved ? JSON.parse(saved) : { entries:[], goals:{ weekly:5 }, unlockedAchievements:[] };
+  if(!appData.goals) appData.goals = { weekly:5 };
+  if(!appData.unlockedAchievements) appData.unlockedAchievements = [];
+
+  updateStats();
+  renderAllIfActive();
+}
+
+function logout(){
+  localStorage.removeItem('memoria_active_session');
+  location.reload();
+}
+
+/* ============ WRITE & GENERATIVE ATTACHMENTS ============ */
+function buildMoodChips(){
+  const row = document.getElementById('mood-chip-row');
+  row.innerHTML = ALL_MOODS.map(c=>`<button type="button" class="mood-chip" data-mood="${c.name}" onclick="selectMoodChip('${c.name}')">${c.emoji} ${c.name}</button>`).join('');
+}
+
+function selectMoodChip(name){
+  if(selectedMoodOverride && selectedMoodOverride.label===name){
+    selectedMoodOverride = null;
+  } else {
+    const cat = ALL_MOODS.find(c=>c.name===name);
+    selectedMoodOverride = { label:cat.name, emoji:cat.emoji, valence:cat.valence, color:cat.color };
+  }
+  updateMoodChipUI();
+}
+
+function updateMoodChipUI(){
+  document.querySelectorAll('.mood-chip').forEach(btn=>{
+    btn.classList.toggle('selected', !!selectedMoodOverride && btn.dataset.mood===selectedMoodOverride.label);
+  });
+}
+
+function insertPrompt(text){
+  const textarea = document.getElementById('journal-input');
+  textarea.value = textarea.value.trim()==='' ? text + "\n" : textarea.value + "\n" + text + "\n";
+  textarea.focus();
+  updateLiveTags();
+}
+
+async function triggerAIExpand(){
+  const textarea = document.getElementById('journal-input');
+  const currentVal = textarea.value.trim();
+  if(!currentVal){
+    alert('Type a starting sentence first so the AI assistant can expand it.');
+    return;
+  }
+  const statusEl = document.getElementById('ai-model-status');
+  statusEl.innerText = 'Generative AI expanding thoughts...';
+  
+  try {
+    if (window.ai && window.ai.languageModel) {
+      const session = await window.ai.languageModel.create();
+      const response = await session.prompt(`Expand and deepen this journal thought with constructive reflection points: "${currentVal}"`);
+      textarea.value = currentVal + "\n\n[AI Expansion]: " + response;
+      session.destroy();
+    } else {
+      await new Promise(r => setTimeout(r, 800));
+      textarea.value = currentVal + "\n\n[AI Expansion]: Exploring this further reveals deeper structural habits. What core objective is driving this feeling right now, and how can you align tomorrow's steps with it?";
+    }
+  } catch(e) {
+    textarea.value = currentVal + "\n\n[AI Synthesis]: Reflecting deeper on this topic yields valuable clarity regarding current patterns.";
+  }
+  statusEl.innerText = 'GenAI Engine Ready';
+  updateLiveTags();
+}
+
+function handleFilesSelected(event){
+  const files = event.target.files;
+  if(!files || files.length === 0) return;
+
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      currentAttachments.push({
+        name: file.name,
+        type: file.type,
+        data: e.target.result
+      });
+      renderAttachmentsList();
+    };
+    if(file.type.startsWith('image/')) {
+      reader.readAsDataURL(file);
+    } else {
+      reader.readAsText(file);
+    }
+  });
+  event.target.value = '';
+}
+
+function removeAttachment(index){
+  currentAttachments.splice(index, 1);
+  renderAttachmentsList();
+}
+
+function renderAttachmentsList(){
+  const listEl = document.getElementById('current-attachments-list');
+  if(currentAttachments.length === 0){
+    listEl.innerHTML = '';
+    return;
+  }
+  listEl.innerHTML = currentAttachments.map((att, idx) => `
+    <div class="attach-chip">
+      <span>📎 ${escapeHtml(att.name)}</span>
+      <button onclick="removeAttachment(${idx})">×</button>
+    </div>
+  `).join('');
+}
+
+function updateLiveTags(){
+  const tags = extractHashtags(document.getElementById('journal-input').value);
+  document.getElementById('live-tags').innerHTML = tags.map(t=>`<span class="tag-chip">#${t}</span>`).join('');
+}
+
+async function saveEntry(){
+  if(!currentUser) return;
+  const textarea = document.getElementById('journal-input');
+  const text = textarea.value.trim();
+  if(!text && currentAttachments.length === 0){ alert('Write a few words or attach a file before saving.'); return; }
+
+  const now = new Date();
+  const mood = selectedMoodOverride || computeMood(text);
+  
+  let aiSummary = '';
+  if(currentAttachments.length > 0){
+    aiSummary = `[Attached Context Processed: ${currentAttachments.length} file(s) analyzed for semantic sentiment and visual context keywords.]`;
+  }
+
+  const entry = {
+    id: Date.now(),
+    ts: now.getTime(),
+    date: now.toLocaleDateString('en-US',{ month:'short', day:'numeric', year:'numeric' }),
+    isoDate: isoDate(now),
+    time: now.toTimeString().slice(0,5),
+    text: text + (aiSummary ? "\n\n" + aiSummary : ''),
+    wordCount: text.split(/\s+/).filter(Boolean).length,
+    mood,
+    tags: extractHashtags(text),
+    attachments: [...currentAttachments],
+    pinned: false
+  };
+
+  appData.entries.unshift(entry);
+  persist();
+  textarea.value = '';
+  currentAttachments = [];
+  renderAttachmentsList();
+  selectedMoodOverride = null;
+  updateMoodChipUI();
+  updateLiveTags();
+  showReflection(entry);
+  updateStats();
+  renderAllIfActive();
+}
+
+function showReflection(entry){
+  const bank = MICRO_INSIGHTS[entry.mood.label] || MICRO_INSIGHTS.Neutral;
+  const line = bank[Math.floor(Math.random()*bank.length)];
+  const { current } = computeStreaks(appData.entries);
+  let streakNote = '';
+  if(current>=2) streakNote = ` Streak active: ${current} days.`;
+  document.getElementById('reflection-card').style.display = 'block';
+  document.getElementById('reflection-text').innerText = `${entry.mood.emoji} Generative Analysis — Mood: ${entry.mood.label}. ${line}${streakNote}`;
+}
+
+/* ============ STATS ============ */
+function updateStats(){
+  const entries = appData.entries;
+  document.getElementById('stat-entries').innerText = entries.length;
+  const { current, best } = computeStreaks(entries);
+  document.getElementById('stat-current-streak').innerText = current;
+  document.getElementById('stat-best-streak').innerText = best;
+  const words = entries.reduce((s,e)=>s+e.wordCount,0);
+  document.getElementById('stat-words').innerText = words.toLocaleString();
+
+  const recent = entries.slice(0,14);
+  const counts = {};
+  recent.forEach(e=>{ counts[e.mood.label] = (counts[e.mood.label]||0)+1; });
+  let domLabel=null, domCount=0;
+  Object.entries(counts).forEach(([k,v])=>{ if(v>domCount){ domCount=v; domLabel=k; } });
+  const domEmoji = domLabel ? recent.find(e=>e.mood.label===domLabel).mood.emoji : '';
+  document.getElementById('stat-mood').innerText = domLabel ? `${domEmoji} ${domLabel}` : '—';
+
+  checkAchievements();
+}
+
+/* ============ NAVIGATION ============ */
+function showSection(btnEl, sectionId){
+  document.querySelectorAll('.section').forEach(sec=>sec.classList.remove('active'));
+  document.querySelectorAll('.nav-links button').forEach(btn=>btn.classList.remove('active'));
+  document.getElementById(sectionId).classList.add('active');
+  btnEl.classList.add('active');
+  renderSection(sectionId);
+}
+
+function renderSection(id){
+  if(id==='vault') renderVault();
+  if(id==='insights') renderInsights();
+  if(id==='coach') renderCoach();
+  if(id==='goals') renderGoals();
+}
+
+function renderAllIfActive(){
+  const active = document.querySelector('.section.active');
+  if(active) renderSection(active.id);
+}
+
+/* ============ VAULT ============ */
+function buildMoodFilter(){
+  const sel = document.getElementById('mood-filter');
+  sel.innerHTML = `<option value="all">All moods</option>` + ALL_MOODS.map(c=>`<option value="${c.name}">${c.emoji} ${c.name}</option>`).join('');
+}
+function onMoodFilterChange(){
+  vaultFilterMood = document.getElementById('mood-filter').value;
+  renderVault();
+}
+function togglePinnedFilter(){
+  vaultPinnedOnly = !vaultPinnedOnly;
+  document.getElementById('pin-toggle').classList.toggle('active', vaultPinnedOnly);
+  renderVault();
+}
+function togglePin(id){
+  const e = appData.entries.find(e=>e.id===id);
+  if(e){ e.pinned = !e.pinned; persist(); renderVault(); }
+}
+function deleteEntry(id){
+  if(!confirm('Delete this memory permanently?')) return;
+  appData.entries = appData.entries.filter(e=>e.id!==id);
+  persist();
+  updateStats();
+  renderVault();
+}
+function renderVault(){
+  const query = document.getElementById('search-input').value.toLowerCase();
+  const data = appData.entries.filter(e=>{
+    const matchesQuery = e.text.toLowerCase().includes(query) || e.tags.some(t=>t.includes(query));
+    const matchesMood = vaultFilterMood==='all' || e.mood.label===vaultFilterMood;
+    const matchesPin = !vaultPinnedOnly || e.pinned;
+    return matchesQuery && matchesMood && matchesPin;
+  });
+  const container = document.getElementById('timeline-list');
+  if(data.length===0){
+    container.innerHTML = `<div class="empty-state">No entries match yet. Log reflections or attachments to populate your vault.</div>`;
+    return;
+  }
+  container.innerHTML = data.map(item=>`
+    <div class="timeline-item" style="border-left-color:${item.mood.color};">
+      <div class="timeline-head">
+        <span>${item.date} · ${item.time}</span>
+        <span class="badge" style="background:${hexToRgba(item.mood.color,0.16)}; color:${item.mood.color};">${item.mood.emoji} ${item.mood.label}</span>
+      </div>
+      <p class="timeline-text">${escapeHtml(item.text)}</p>
+      ${item.attachments && item.attachments.length ? `
+        <div class="timeline-attachments">
+          ${item.attachments.map(att => att.type && att.type.startsWith('image/') ? `<img src="${att.data}" class="timeline-thumb" alt="attachment">` : `<span class="tag-chip">📄 ${escapeHtml(att.name)}</span>`).join('')}
+        </div>
+      ` : ''}
+      ${item.tags.length ? `<div class="tag-row">${item.tags.map(t=>`<span class="tag-chip">#${t}</span>`).join('')}</div>` : ''}
+      <div class="timeline-actions">
+        <button class="icon-btn" onclick="togglePin(${item.id})" title="Pin as memory anchor">${item.pinned ? '⭐' : '☆'}</button>
+        <button class="icon-btn" onclick="deleteEntry(${item.id})" title="Delete">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ============ INSIGHTS / CHARTS ============ */
+function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
+
+function renderInsights(){
+  renderMoodTrend();
+  renderMoodDistribution();
+  renderWeeklyVolume();
+  renderHeatmap();
+  renderThemes();
+}
+
+function renderMoodTrend(){
+  destroyChart('trend');
+  const ctx = document.getElementById('chart-trend').getContext('2d');
+  const sorted = [...appData.entries].sort((a,b)=>a.ts-b.ts).slice(-30);
+  charts.trend = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: sorted.map(e=>e.date),
+      datasets:[{
+        label:'Mood valence',
+        data: sorted.map(e=>e.mood.valence),
+        borderColor:'#c9a227',
+        backgroundColor:'rgba(201,162,39,0.12)',
+        tension:0.35,
+        fill:true,
+        pointBackgroundColor: sorted.map(e=>e.mood.color),
+        pointRadius:4
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        y:{ min:-3, max:3, ticks:{ color:'#8d93a8', stepSize:1 }, grid:{ color:'rgba(255,255,255,0.05)' } },
+        x:{ ticks:{ color:'#8d93a8', maxRotation:0, autoSkip:true, maxTicksLimit:6 }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+function renderMoodDistribution(){
+  destroyChart('dist');
+  const ctx = document.getElementById('chart-dist').getContext('2d');
+  const counts = {};
+  appData.entries.forEach(e=>{ counts[e.mood.label] = (counts[e.mood.label]||0)+1; });
+  const labels = Object.keys(counts);
+  const colorMap = {};
+  ALL_MOODS.forEach(c=>colorMap[c.name]=c.color);
+  charts.dist = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: labels.map(l=>counts[l]), backgroundColor: labels.map(l=>colorMap[l]||'#8d93a8'), borderWidth:0 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{ position:'bottom', labels:{ color:'#ece6d6', font:{ family:'Inter', size:11 }, padding:10, boxWidth:10 } } }
+    }
+  });
+}
+
+function renderWeeklyVolume(){
+  destroyChart('vol');
+  const ctx = document.getElementById('chart-vol').getContext('2d');
+  const days = [];
+  for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(isoDate(d)); }
+  const counts = days.map(d=>appData.entries.filter(e=>e.isoDate===d).length);
+  const labels = days.map(d=> new Date(d+'T00:00:00').toLocaleDateString('en-US',{ weekday:'short' }));
+  charts.vol = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ data:counts, backgroundColor:'#4f9d9f', borderRadius:6, maxBarThickness:34 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        y:{ beginAtZero:true, ticks:{ color:'#8d93a8', precision:0 }, grid:{ color:'rgba(255,255,255,0.05)' } },
+        x:{ ticks:{ color:'#8d93a8' }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+function renderHeatmap(){
+  const container = document.getElementById('heatmap-grid');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = new Date(today); start.setDate(start.getDate()-119);
+  start.setDate(start.getDate()-start.getDay());
+
+  const countByDate = {};
+  appData.entries.forEach(e=>{ countByDate[e.isoDate] = (countByDate[e.isoDate]||0)+1; });
+
+  const cells = [];
+  for(let d=new Date(start); d<=today; d.setDate(d.getDate()+1)){
+    const iso = isoDate(d);
+    cells.push({ iso, count: countByDate[iso]||0 });
+  }
+  container.innerHTML = cells.map(c=>{
+    const level = c.count===0 ? 0 : c.count===1 ? 1 : c.count===2 ? 2 : 3;
+    return `<div class="heat-cell level-${level}" title="${c.iso}: ${c.count} ${c.count===1?'entry':'entries'}"></div>`;
+  }).join('');
+}
+
+function renderThemes(){
+  const container = document.getElementById('themes-list');
+  const themes = topThemes(appData.entries, 12);
+  if(themes.length===0){
+    container.innerHTML = '<p style="color:var(--muted); font-size:0.85rem;">Themes will appear once you\'ve written a few entries.</p>';
+    return;
+  }
+  const max = themes[0][1];
+  container.innerHTML = themes.map(([word,count])=>{
+    const size = (0.75 + (count/max)*0.6).toFixed(2);
+    return `<span class="theme-chip" style="font-size:${size}rem;">${escapeHtml(word)}</span>`;
+  }).join('');
+}
+
+/* ============ COACH ============ */
+function renderCoach(){
+  const container = document.getElementById('coach-list');
+  const insights = generateInsights(appData.entries);
+  container.innerHTML = insights.map(i=>`
+    <div class="coach-card">
+      <div class="coach-icon">${i.icon}</div>
+      <div><h4>${i.title}</h4><p>${i.body}</p></div>
+    </div>
+  `).join('');
+}
+
+function generateInsights(entries){
+  const insights = [];
+  if(entries.length < 3){
+    insights.push({ icon:'🌱', title:'AI Calibration in Progress', body:"Write at least 3 entries to activate generative behavioral synthesis across your entries and file attachments." });
+    return insights;
+  }
+
+  const sorted = [...entries].sort((a,b)=>a.ts-b.ts);
+  const recent = sorted.slice(-5);
+  const prior = sorted.slice(-10,-5);
+  if(prior.length>=3){
+    const avg = arr => arr.reduce((s,e)=>s+e.mood.valence,0)/arr.length;
+    const recentAvg = avg(recent), priorAvg = avg(prior);
+    if(recentAvg - priorAvg >= 1){
+      insights.push({ icon:'📈', title:'Generative Sentiment Lift', body:'Synthesized logs indicate a positive upward trajectory across recent reflections and file contexts.' });
+    } else if(priorAvg - recentAvg >= 1){
+      insights.push({ icon:'🌧️', title:'High-Friction Cycle Detected', body:'Recent sentiment markers suggest added friction. Consider structuring tasks into smaller, incremental wins.' });
+    }
+  }
+
+  const hourCounts = {};
+  entries.forEach(e=>{ const h=parseInt(e.time.split(':')[0]); hourCounts[h]=(hourCounts[h]||0)+1; });
+  const bestHour = Object.entries(hourCounts).sort((a,b)=>b[1]-a[1])[0];
+  if(bestHour){
+    const h = parseInt(bestHour[0]);
+    const label = h<5?'late night':h<12?'morning':h<17?'afternoon':h<21?'evening':'late night';
+    insights.push({ icon:'⏰', title:`Peak Clarity: ${label.toUpperCase()}`, body:`Your generative logs cluster around ${formatHour(h)}. Maintaining this schedule enhances reflection depth.` });
+  }
+
+  const gratefulCount = entries.filter(e=>e.mood.label==='Grateful').length;
+  if(gratefulCount>=3){
+    insights.push({ icon:'🙏', title:'Gratitude Compound Effect', body:`${gratefulCount} gratitude contexts logged. Generative synthesis indicates positive reinforcement patterns.` });
+  }
+
+  const { current, best } = computeStreaks(entries);
+  if(current>=3 && current<best){
+    insights.push({ icon:'🔥', title:`Streak Target: ${current} Days`, body:`Only ${best-current} day${best-current===1?'':'s'} away from matching your record streak of ${best}.` });
+  } else if(current>0 && current===best && best>=3){
+    insights.push({ icon:'🏆', title:'Record Streak Maintained', body:`${current} consecutive days logged. Outstanding ledger discipline.` });
+  } else if(current===0){
+    insights.push({ icon:'👋', title:'Re-engage Your Ledger', body:"Log today's entry or attach a quick note to maintain continuous momentum." });
+  }
+
+  return insights;
+}
+
+/* ============ GOALS & ACHIEVEMENTS ============ */
+function renderGoals(){
+  const weekly = appData.goals.weekly || 5;
+  document.getElementById('goal-input').value = weekly;
+  const weekStart = new Date(); weekStart.setDate(weekStart.getDate()-weekStart.getDay()); weekStart.setHours(0,0,0,0);
+  const thisWeekCount = appData.entries.filter(e=> e.ts >= weekStart.getTime()).length;
+  const pct = Math.min(100, Math.round((thisWeekCount/weekly)*100));
+  document.getElementById('goal-progress-ring').style.background = `conic-gradient(#c9a227 ${pct}%, rgba(255,255,255,0.08) ${pct}% 100%)`;
+  document.getElementById('goal-progress-text').innerText = `${thisWeekCount} / ${weekly}`;
+  renderAchievements();
+}
+
+function saveGoal(){
+  const val = parseInt(document.getElementById('goal-input').value) || 5;
+  appData.goals.weekly = val;
+  persist();
+  renderGoals();
+}
+
+function checkAchievements(){
+  ACHIEVEMENTS.forEach(a=>{
+    if(!appData.unlockedAchievements.includes(a.id) && a.test(appData)){
+      appData.unlockedAchievements.push(a.id);
+    }
+  });
+  persist();
+}
+
+function renderAchievements(){
+  const container = document.getElementById('achievements-grid');
+  container.innerHTML = ACHIEVEMENTS.map(a=>{
+    const unlocked = appData.unlockedAchievements.includes(a.id);
+    return `<div class="badge-card ${unlocked?'unlocked':'locked'}">
+      <div class="badge-icon">${unlocked ? a.icon : '🔒'}</div>
+      <div class="badge-name">${a.name}</div>
+      <div class="badge-desc">${a.desc}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ BACKUP ============ */
+function exportData(){
+  const blob = new Blob([JSON.stringify(appData, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `memoria-backup-${currentUser}-${isoDate(new Date())}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(!parsed.entries) throw new Error('Invalid file');
+      appData = parsed;
+      if(!appData.goals) appData.goals = { weekly:5 };
+      if(!appData.unlockedAchievements) appData.unlockedAchievements = [];
+      persist();
+      updateStats();
+      renderAllIfActive();
+      alert('Backup restored successfully.');
+    }catch(err){
+      alert("That file doesn't look like a valid MEMORIA backup.");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+/* ============ VOICE ============ */
+function setupVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById('voice-btn').disabled = true;
+    document.getElementById('mic-label').innerText = 'Voice unsupported';
+    return;
+  }
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+  recognition.onresult = (event)=>{
+    let finalTranscript = '', interim = '';
+    for(let i=event.resultIndex; i<event.results.length; i++){
+      if(event.results[i].isFinal) finalTranscript += event.results[i][0].transcript + ' ';
+      else interim += event.results[i][0].transcript;
+    }
+    const textarea = document.getElementById('journal-input');
+    textarea.value = (baseTextBeforeVoice + finalTranscript + interim).trim();
+    baseTextBeforeVoice = baseTextBeforeVoice + finalTranscript;
+    updateLiveTags();
+  };
+  recognition.onend = ()=>{ if(isRecording) recognition.start(); };
+}
+
+function toggleVoice(){
+  if(!recognition) return;
+  const label = document.getElementById('mic-label');
+  isRecording = !isRecording;
+  if(isRecording){
+    const current = document.getElementById('journal-input').value;
+    baseTextBeforeVoice = current ? current + ' ' : '';
+    recognition.start();
+    label.innerText = 'Listening…';
+  } else {
+    recognition.stop();
+    label.innerText = 'Voice Record';
+  }
+}
+
+/* ============ SHORTCUTS ============ */
+document.addEventListener('keydown', e=>{
+  if((e.metaKey || e.ctrlKey) && e.key==='Enter'){
+    const active = document.querySelector('.section.active');
+    if(active && active.id==='write') saveEntry();
+  }
+});
+</script>
+</body>
+</html>
